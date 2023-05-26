@@ -1,7 +1,7 @@
 import "./bootstrap";
-import {createApp} from "vue";
+import {createApp} from "vue/dist/vue.esm-bundler";
 
-import App from "@/chat/components/App";
+import App from "@/chat/components/App.vue";
 
 const app = createApp({});
 app.component('app', App);
