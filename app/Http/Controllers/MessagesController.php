@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Message;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class MessagesController extends Controller
@@ -10,18 +11,31 @@ class MessagesController extends Controller
     /**
      * Display a listing of the resource.
      *
-     * @return \Illuminate\Http\Response
+     * @return JsonResponse
      */
-    public function index()
+    public function index(Request $request)
     {
-        //
+        $messagesQuery = Message::getMessagesQueryBetweenTwoUsers($request, auth()->user()->id, $request->receiver_id);
+
+        // display top 10 messages for user
+        $result = $messagesQuery->orderBy('created_at', 'DESC')
+                        ->limit($request->limit ?? 10)
+                        ->get();
+
+        if($result->count()) {
+            foreach ($result as $msg) {
+                $msg->update(['seen' => 0]);
+            }
+        }
+
+        return response()->json(data: ['status' => true, 'messages' => $result]);
     }
 
     /**
      * Store a newly created resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
+     * @return JsonResponse
      */
     public function store(Request $request)
     {

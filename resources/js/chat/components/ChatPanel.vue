@@ -8,16 +8,7 @@
         <section class="px-2 py-4 h-72 overflow-y-scroll chat-panel-content">
 
             <ul>
-                <MessageLine />
-                <MessageLine />
-                <MessageLine />
-                <MessageLine />
-                <MessageLine />
-                <MessageLine />
-                <MessageLine />
-                <MessageLine />
-                <MessageLine />
-                <MessageLine />
+                <MessageLine v-for="userMessage in userMessages" :key="userMessage.id" :message="userMessage" />
             </ul>
 
         </section>
@@ -46,6 +37,7 @@ export default {
         const { user } = props;
 
         const messageContent = ref("");
+        const userMessages = ref([]);
 
         function submitMessage() {
             if(!messageContent.value) {
@@ -61,6 +53,8 @@ export default {
                     .then(response => {
                         if(response && response.data.status) {
                             // display and append the message in the message list
+                            userMessages.value.push(response.data.message);
+
                             messageContent.value = "";
                         }
                     }).catch(error => {
@@ -68,9 +62,20 @@ export default {
                     });
         }
 
+        async function getMessages() {
+            const result = await window.axios.get(`/messages?receiver_id=${user.id}`);
+
+            if(result.data.messages) {
+                userMessages.value = result.data.messages.reverse();
+            }
+        }
+
+        getMessages();
+
         return {
             messageContent,
-            submitMessage
+            submitMessage,
+            userMessages
         }
     }
 }

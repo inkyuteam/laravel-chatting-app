@@ -34,6 +34,9 @@ Route::get("/online-users", [UsersController::class, "getOnlineUsers"]);
 
 Route::group(['prefix' => 'messages', 'middleware' => 'auth'], function() {
 
+    Route::get("/", [MessagesController::class, "index"]);
+
     Route::post("/", [MessagesController::class, "store"])->name("message.store");
+
 
 });
