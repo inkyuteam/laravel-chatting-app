@@ -23,23 +23,56 @@
         </section>
 
         <footer class="flex flex-row items-center chat-panel-footer">
-            <a href="#" class="px-1 h-full bg-blue-700 text-white items-center flex">
+            <a href="#" @click.prevent="submitMessage" class="px-1 h-full bg-blue-700 text-white items-center flex">
                 <i class="fas fa-solid fa-paper-plane mx-1"></i>
                 Send
             </a>
-            <textarea name="currentMessage" class="grow p-2 border border-solid border-gray-300"></textarea>
+            <textarea name="currentMessage" class="grow p-2 border border-solid border-gray-300" v-model="messageContent"></textarea>
         </footer>
     </div>
 </template>
 
 <script>
+import {ref} from "vue";
 import MessageLine from "@/chat/components/MessageLine.vue";
 
 export default {
     name: "ChatPanel",
     components: {MessageLine},
     props: ["user", "emittedMessage"],
-    emits: ["onCloseChat"]
+    emits: ["onCloseChat"],
+    setup(props) {
+
+        const { user } = props;
+
+        const messageContent = ref("");
+
+        function submitMessage() {
+            if(!messageContent.value) {
+                return;
+            }
+
+            const payload = {
+              receiver_id: user.id,
+                message_content: messageContent.value
+            };
+
+            window.axios.post("/messages", payload)
+                    .then(response => {
+                        if(response && response.data.status) {
+                            // display and append the message in the message list
+                            messageContent.value = "";
+                        }
+                    }).catch(error => {
+                       console.error(error.response);
+                    });
+        }
+
+        return {
+            messageContent,
+            submitMessage
+        }
+    }
 }
 </script>
 
