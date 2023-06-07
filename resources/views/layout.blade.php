@@ -54,6 +54,10 @@
             </div>
         </div>
 
+        @if(\Session::has('success'))
+            <div class="text-green-500 mt-2 mx-4">{{ \Session::get('success') }}</div>
+        @endif
+
         @yield('content')
     </body>
 </html>
