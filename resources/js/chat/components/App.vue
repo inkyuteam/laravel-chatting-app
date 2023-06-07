@@ -2,7 +2,7 @@
     <div v-if="auth && auth.id !== undefined">
         <h2>Select any user to chat with</h2>
         <ul class="mt-3 mx-3 list-none inline-block">
-            <li v-for="user in users" v-bind:key="user.id" class="mb-4">
+            <li v-for="user in users" v-bind:key="user.id" class="mb-4 inline">
                 <i class="fas fa-comment text-teal-700 px-2"></i>
                 <a href="#" class="text-teal-700 hover:text-teal-900 underline" v-on:click.prevent="showChatPanel(user)">{{user.name}}</a>
             </li>
@@ -11,14 +11,24 @@
     <div v-else>
         <p><a href="/login" class="text-teal-700 hover:text-teal-900 underline capitalize">Login to chat>>>></a></p>
     </div>
+
+    <!-- Chat panel containers: wrapper for all chat panels -->
+    <div class="fixed bottom-0 right-4 z-99999 w-full chat-panel-containers">
+        <div class="relative overflow-x-scroll flex flex-row-reverse mx-6">
+            <ChatPanel v-for="panel in chatPanels.panels" :key="panel.selectedUser.id"
+               :user="panel.selectedUser" :emitted-message="panel.emittedMessage" @onCloseChat="hideChatPanel" />
+        </div>
+    </div>
 </template>
 
 <script>
 
 import {provide, ref, reactive} from "vue";
+import ChatPanel from "@/chat/components/ChatPanel.vue";
 
 export default {
     name: "App",
+    components: {ChatPanel},
     props: ["auth"],
     setup({auth}) {
 
@@ -69,7 +79,8 @@ export default {
         return {
             users: onlineUsers,
             showChatPanel,
-            hideChatPanel
+            hideChatPanel,
+            chatPanels
         }
     }
 }
