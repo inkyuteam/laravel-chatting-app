@@ -28,7 +28,6 @@ export default {
 
         async function getOnlineUsers() {
             const result = await window.axios.get("/online-users");
-            console.log(result);
 
             if(result.data.users) {
                 onlineUsers.value = result.data.users;
