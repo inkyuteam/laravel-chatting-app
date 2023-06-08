@@ -18,6 +18,12 @@ class MessagesController extends Controller
     {
         $messagesQuery = Message::getMessagesQueryBetweenTwoUsers($request, auth()->user()->id, $request->receiver_id);
 
+        if($request->earlier_date) {
+            $dateFormatted = (new \DateTime($request->earlier_date))->format("Y-m-d H:i:s");
+
+            $messagesQuery->where("created_at", "<", $dateFormatted);
+        }
+
         // display top 10 messages for user
         $result = $messagesQuery->orderBy('created_at', 'DESC')
                         ->limit($request->limit ?? 10)

@@ -5,7 +5,8 @@
             @click="$emit('onCloseChat', user)"></i>
             <div class="flex-2 grow basis-1/2 text-white">{{ user.name }}</div>
         </header>
-        <section class="px-2 py-4 h-72 overflow-y-scroll chat-panel-content" ref="chatContentRef">
+        <section class="px-2 py-4 h-72 overflow-y-scroll chat-panel-content" ref="chatContentRef"
+                 @scroll="handleChatScroll">
 
             <ul>
                 <MessageLine v-for="userMessage in userMessages" :key="userMessage.id" :message="userMessage" />
@@ -25,6 +26,8 @@
 
 <script>
 import {ref, watch} from "vue";
+import _ from "lodash";
+
 import MessageLine from "@/chat/components/MessageLine.vue";
 
 export default {
@@ -40,6 +43,7 @@ export default {
 
         const messageContent = ref("");
         const userMessages = ref([]);
+        let scrollPoint = ref(0);
 
         function submitMessage() {
             if(!messageContent.value) {
@@ -82,9 +86,37 @@ export default {
             setTimeout(() => {
                 if(chatContentRef && chatContentRef.value) {
                     chatContentRef.value.scrollTop = chatContentRef.value.scrollHeight;
+
+                    scrollPoint.value = chatContentRef.value.scrollTop;
                 }
             }, 300);
         }
+
+        const handleChatScroll = _.debounce((e) => {
+                // if the user scrolls to top
+                if(e.target.scrollTop - 50 < scrollPoint.value) {
+                    const oldMessage = userMessages.value[0];
+
+                    window.axios.get(`/messages?receiver_id=${user.id}&earlier_date=${oldMessage.created_at}`)
+                        .then(response => {
+                            if(response && response.data.messages) {
+                                const filtered = [];
+
+                                response.data.messages.reverse().forEach(message => {
+                                    if(!userMessages.value.find(m => m.id == message.id)) {
+                                        filtered.push(message);
+                                    }
+                                });
+
+                                userMessages.value = [...filtered, ...userMessages.value];
+                            }
+                        }).catch(error => {
+                        console.error(error.response);
+                    });
+                }
+
+                scrollPoint.value = e.target.scrollTop;
+        }, 1000);
 
         getMessages();
 
@@ -103,7 +135,8 @@ export default {
             messageContent,
             submitMessage,
             userMessages,
-            chatContentRef
+            chatContentRef,
+            handleChatScroll
         }
     }
 }
