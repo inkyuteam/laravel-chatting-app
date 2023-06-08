@@ -83,6 +83,8 @@ export default {
             const filtered = [...chatPanels.panels].filter(panel => panel.selectedUser.id !== user.id);
 
             chatPanels.panels = [...filtered];
+
+            removeChatPanelFromStorage(user);
         }
 
         function updateSelectedUser(selectedUser)
@@ -99,6 +101,8 @@ export default {
             showChatPanel(user);
 
             updateSelectedUser(user);
+
+            persistChatPanelInStorage(user);
         }
 
         const displayToastMessage = (message) => {
@@ -122,10 +126,41 @@ export default {
                 });
         }
 
+        function persistChatPanelInStorage(user)
+        {
+            if(sessionStorage.getItem("opened_panels") && sessionStorage.getItem("opened_panels") !== "") {
+                const opened = JSON.parse(sessionStorage.getItem("opened_panels"));
+                if(!opened.find(p => p.id == user.id)) {
+                    opened.push(user);
+                    sessionStorage.setItem("opened_panels", JSON.stringify(opened));
+                }
+            } else {
+                sessionStorage.setItem("opened_panels", JSON.stringify([user]));
+            }
+        }
+
+        function removeChatPanelFromStorage(user)
+        {
+            if(sessionStorage.getItem("opened_panels")) {
+                let opened = JSON.parse(sessionStorage.getItem("opened_panels"));
+                opened = opened.filter(p => p.id != user.id);
+                sessionStorage.setItem("opened_panels", JSON.stringify(opened));
+            }
+        }
+
         getOnlineUsers();
 
         onMounted(() => {
            if(auth) {
+
+               // check for persisted chat panels and reopens it
+               const opened = JSON.parse(sessionStorage.getItem("opened_panels"));
+               if(opened) {
+                   opened.forEach(p => {
+                       showChatPanel(p);
+                   });
+               }
+
                window.Echo.private(`messages.${auth.id}`)
                     .listen('\\App\\Events\\MessageSent', e => {
                         const message = e.message;
