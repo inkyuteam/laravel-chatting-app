@@ -24,7 +24,7 @@
 </template>
 
 <script>
-import {ref} from "vue";
+import {ref, watch} from "vue";
 import MessageLine from "@/chat/components/MessageLine.vue";
 
 export default {
@@ -87,6 +87,17 @@ export default {
         }
 
         getMessages();
+
+        watch(() => props.emittedMessage, (newMessage, oldMessage) => {
+            if(newMessage) {
+                const isMessageExist = userMessages.value.find(m => m.id == newMessage.id);
+
+                if(!isMessageExist) {
+                    userMessages.value.push(newMessage);
+                    scrollToChatBottom();
+                }
+            }
+        });
 
         return {
             messageContent,

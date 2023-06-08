@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\MessageSent;
 use App\Models\Message;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -50,6 +51,9 @@ class MessagesController extends Controller
         $message->save();
 
         $updatedMessage = Message::with(['sender', 'receiver'])->find($message->id);
+
+        // fire the message sent event
+        MessageSent::dispatch($updatedMessage);
 
         return response()->json(data: ['status' => true, 'message' => $updatedMessage], status: 201);
     }

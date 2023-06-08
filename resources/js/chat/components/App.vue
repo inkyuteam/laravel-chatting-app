@@ -19,11 +19,19 @@
                :user="panel.selectedUser" :emitted-message="panel.emittedMessage" @onCloseChat="hideChatPanel" />
         </div>
     </div>
+
+    <audio style="display: none" id="chat-tone">
+        <source :src="'/assets/sound/notification_tone.mp3'" type="audio/mpeg" />
+        Your browser does not support audio element
+    </audio>
 </template>
 
 <script>
 
-import {provide, ref, reactive} from "vue";
+import {provide, ref, reactive, onMounted} from "vue";
+import { toast } from 'vue3-toastify';
+import 'vue3-toastify/dist/index.css';
+
 import ChatPanel from "@/chat/components/ChatPanel.vue";
 
 export default {
@@ -74,7 +82,34 @@ export default {
             chatPanels.panels = [...filtered];
         }
 
+        const displayToastMessage = (message) => {
+            toast(message, {
+                autoClose: 3000,
+                type: "info",
+                position: "top-left"
+            });
+        }
+
+        const playChatTone = () => {
+            (document.getElementById("chat-tone")).play();
+        }
+
         getOnlineUsers();
+
+        onMounted(() => {
+           if(auth) {
+               window.Echo.private(`messages.${auth.id}`)
+                    .listen('\\App\\Events\\MessageSent', e => {
+                        const message = e.message;
+
+                        showChatPanel(message.sender, message);
+
+                        displayToastMessage(message.content);
+
+                        playChatTone();
+                    });
+           }
+        });
 
         return {
             users: onlineUsers,
