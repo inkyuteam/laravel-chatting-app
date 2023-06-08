@@ -5,7 +5,7 @@
             @click="$emit('onCloseChat', user)"></i>
             <div class="flex-2 grow basis-1/2 text-white">{{ user.name }}</div>
         </header>
-        <section class="px-2 py-4 h-72 overflow-y-scroll chat-panel-content">
+        <section class="px-2 py-4 h-72 overflow-y-scroll chat-panel-content" ref="chatContentRef">
 
             <ul>
                 <MessageLine v-for="userMessage in userMessages" :key="userMessage.id" :message="userMessage" />
@@ -36,6 +36,8 @@ export default {
 
         const { user } = props;
 
+        const chatContentRef = ref(null);
+
         const messageContent = ref("");
         const userMessages = ref([]);
 
@@ -56,6 +58,9 @@ export default {
                             userMessages.value.push(response.data.message);
 
                             messageContent.value = "";
+
+                            // scroll bottom
+                            scrollToChatBottom();
                         }
                     }).catch(error => {
                        console.error(error.response);
@@ -67,7 +72,18 @@ export default {
 
             if(result.data.messages) {
                 userMessages.value = result.data.messages.reverse();
+
+                scrollToChatBottom();
             }
+        }
+
+        function scrollToChatBottom()
+        {
+            setTimeout(() => {
+                if(chatContentRef && chatContentRef.value) {
+                    chatContentRef.value.scrollTop = chatContentRef.value.scrollHeight;
+                }
+            }, 300);
         }
 
         getMessages();
@@ -75,7 +91,8 @@ export default {
         return {
             messageContent,
             submitMessage,
-            userMessages
+            userMessages,
+            chatContentRef
         }
     }
 }
