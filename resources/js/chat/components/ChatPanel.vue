@@ -16,11 +16,14 @@
 
         </section>
 
+        <EmojiSelect v-if="emojiBtnClicked" @onSelect="handleSelectEmoji" @onClose="emojiBtnClicked = false" />
+
         <footer class="flex flex-row items-center chat-panel-footer">
             <a href="#" @click.prevent="submitMessage" class="px-1 h-full bg-blue-700 text-white items-center flex">
                 <i class="fas fa-solid fa-paper-plane mx-1"></i>
                 Send
             </a>
+            <button class="text-xl font-bold text-gray-600 mx-1" type="button" title="add emoji" @click="showEmojiList">&#128512;</button>
             <textarea name="currentMessage" class="grow p-2 border border-solid border-gray-300" v-model="messageContent"></textarea>
         </footer>
     </div>
@@ -31,10 +34,11 @@ import {ref, watch} from "vue";
 import _ from "lodash";
 
 import MessageLine from "@/chat/components/MessageLine.vue";
+import EmojiSelect from "@/chat/components/EmojiSelect.vue";
 
 export default {
     name: "ChatPanel",
-    components: {MessageLine},
+    components: {EmojiSelect, MessageLine},
     props: ["user", "emittedMessage"],
     emits: ["onCloseChat"],
     setup(props) {
@@ -47,6 +51,16 @@ export default {
         const userMessages = ref([]);
         let scrollPoint = ref(0);
         const loading = ref(false);
+        const emojiBtnClicked = ref(false);
+
+        function handleSelectEmoji(emojiHtml) {
+            sendMessage(user.id, emojiHtml);
+        }
+
+        function showEmojiList()
+        {
+            emojiBtnClicked.value = true;
+        }
 
         function showLoading() {
             loading.value = true;
@@ -61,25 +75,33 @@ export default {
                 return;
             }
 
+            sendMessage(user.id, messageContent.value, () => {
+                messageContent.value = "";
+            });
+        }
+
+        function sendMessage(receiverId, messageContent, cb = null) {
             const payload = {
-              receiver_id: user.id,
-                message_content: messageContent.value
+                receiver_id: receiverId,
+                message_content: messageContent
             };
 
             window.axios.post("/messages", payload)
-                    .then(response => {
-                        if(response && response.data.status) {
-                            // display and append the message in the message list
-                            userMessages.value.push(response.data.message);
+                .then(response => {
+                    if(response && response.data.status) {
+                        // display and append the message in the message list
+                        userMessages.value.push(response.data.message);
 
-                            messageContent.value = "";
-
-                            // scroll bottom
-                            scrollToChatBottom();
+                        if(cb) {
+                            cb();
                         }
-                    }).catch(error => {
-                       console.error(error.response);
-                    });
+
+                        // scroll bottom
+                        scrollToChatBottom();
+                    }
+                }).catch(error => {
+                console.error(error.response);
+            });
         }
 
         async function getMessages() {
@@ -162,7 +184,10 @@ export default {
             userMessages,
             chatContentRef,
             handleChatScroll,
-            loading
+            loading,
+            emojiBtnClicked,
+            showEmojiList,
+            handleSelectEmoji
         }
     }
 }
