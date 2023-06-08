@@ -8,6 +8,8 @@
         <section class="px-2 py-4 h-72 overflow-y-scroll chat-panel-content" ref="chatContentRef"
                  @scroll="handleChatScroll">
 
+            <i class="fas fa-circle-notch fa-spin absolute left-36 top-16 text-3xl" v-if="loading"></i>
+
             <ul>
                 <MessageLine v-for="userMessage in userMessages" :key="userMessage.id" :message="userMessage" />
             </ul>
@@ -44,6 +46,15 @@ export default {
         const messageContent = ref("");
         const userMessages = ref([]);
         let scrollPoint = ref(0);
+        const loading = ref(false);
+
+        function showLoading() {
+            loading.value = true;
+        }
+
+        function hideLoading() {
+            loading.value = false;
+        }
 
         function submitMessage() {
             if(!messageContent.value) {
@@ -72,7 +83,10 @@ export default {
         }
 
         async function getMessages() {
+            showLoading();
+
             const result = await window.axios.get(`/messages?receiver_id=${user.id}`);
+            hideLoading();
 
             if(result.data.messages) {
                 userMessages.value = result.data.messages.reverse();
@@ -95,6 +109,8 @@ export default {
         const handleChatScroll = _.debounce((e) => {
                 // if the user scrolls to top
                 if(e.target.scrollTop - 50 < scrollPoint.value) {
+                    showLoading();
+
                     const oldMessage = userMessages.value[0];
 
                     window.axios.get(`/messages?receiver_id=${user.id}&earlier_date=${oldMessage.created_at}`)
@@ -110,7 +126,16 @@ export default {
 
                                 userMessages.value = [...filtered, ...userMessages.value];
                             }
+
+                            setTimeout(() => {
+                                hideLoading();
+                            }, 2000);
+
                         }).catch(error => {
+                            setTimeout(() => {
+                                hideLoading();
+                            }, 2000);
+
                         console.error(error.response);
                     });
                 }
@@ -136,7 +161,8 @@ export default {
             submitMessage,
             userMessages,
             chatContentRef,
-            handleChatScroll
+            handleChatScroll,
+            loading
         }
     }
 }
