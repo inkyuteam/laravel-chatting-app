@@ -31,7 +31,9 @@ class MessagesController extends Controller
 
         if($result->count()) {
             foreach ($result as $msg) {
-                $msg->update(['seen' => 0]);
+                if((int) $msg->receiver_id === auth()->user()->id) {
+                    $msg->update(['seen' => 0]);
+                }
             }
         }
 
@@ -62,6 +64,17 @@ class MessagesController extends Controller
         MessageSent::dispatch($updatedMessage);
 
         return response()->json(data: ['status' => true, 'message' => $updatedMessage], status: 201);
+    }
+
+    public function update($id)
+    {
+        $message = Message::find($id);
+
+        $message->seen = 0;
+
+        $message->save();
+
+        return response()->json(data: ['status' => true, 'message' => $message]);
     }
 
     /**

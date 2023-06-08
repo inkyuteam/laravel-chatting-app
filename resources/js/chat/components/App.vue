@@ -4,7 +4,10 @@
         <ul class="mt-3 mx-3 list-none inline-block">
             <li v-for="user in users" v-bind:key="user.id" class="mb-4 inline">
                 <i class="fas fa-comment text-teal-700 px-2"></i>
-                <a href="#" class="text-teal-700 hover:text-teal-900 underline" v-on:click.prevent="showChatPanel(user)">{{user.name}}</a>
+                <a href="#" class="text-teal-700 hover:text-teal-900 underline" v-on:click.prevent="handleUserClick(user)">{{user.name}}</a>
+                <span class="bg-red-500 text-white rounded-full px-2 absolute chat-badge-counter" v-if="user.unseen_messages.length > 0">
+                    {{ user.unseen_messages.length }}
+                </span>
             </li>
         </ul>
     </div>
@@ -82,6 +85,22 @@ export default {
             chatPanels.panels = [...filtered];
         }
 
+        function updateSelectedUser(selectedUser)
+        {
+            const userIndex = onlineUsers.value.findIndex(u => u.id === selectedUser.id);
+
+            if(userIndex !== -1) {
+                onlineUsers.value[userIndex].unseen_messages = [];
+            }
+        }
+
+        function handleUserClick(user)
+        {
+            showChatPanel(user);
+
+            updateSelectedUser(user);
+        }
+
         const displayToastMessage = (message) => {
             toast(message, {
                 autoClose: 3000,
@@ -92,6 +111,15 @@ export default {
 
         const playChatTone = () => {
             (document.getElementById("chat-tone")).play();
+        }
+
+        const sendMessageUpdateRequest = (messageId) => {
+            window.axios.put(`/messages/${messageId}`)
+                .then(response => {
+                    if(response.data.status) {
+                        console.log('message updated');
+                    }
+                });
         }
 
         getOnlineUsers();
@@ -107,6 +135,8 @@ export default {
                         displayToastMessage(message.content);
 
                         playChatTone();
+
+                        sendMessageUpdateRequest(message.id);
                     });
            }
         });
@@ -115,7 +145,8 @@ export default {
             users: onlineUsers,
             showChatPanel,
             hideChatPanel,
-            chatPanels
+            chatPanels,
+            handleUserClick
         }
     }
 }

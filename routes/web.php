@@ -38,5 +38,6 @@ Route::group(['prefix' => 'messages', 'middleware' => 'auth'], function() {
 
     Route::post("/", [MessagesController::class, "store"])->name("message.store");
 
+    Route::put("/{id}", [MessagesController::class, "update"]);
 
 });

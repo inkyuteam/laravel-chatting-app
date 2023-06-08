@@ -41,4 +41,11 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
     ];
+
+    public function unseenMessages()
+    {
+        return $this->hasMany(Message::class, 'sender_id')
+                ->where('seen', 1)
+                ->where('receiver_id', auth()->user()->id);
+    }
 }
